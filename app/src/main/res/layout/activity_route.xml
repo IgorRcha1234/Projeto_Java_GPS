@@ -90,7 +90,7 @@
                 android:id="@+id/tvSummaryOrigem"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Entrada Bloco Alfa"
+                android:text="Entrada Bloco B"
                 android:textColor="@color/text_dark"
                 android:textSize="13sp"
                 android:textStyle="bold" />
@@ -168,52 +168,40 @@
         app:layout_constraintStart_toStartOf="parent" />
 
     <!-- Canvas / Map View Area -->
+
+    <!-- Bottom Instructions Sheet -->
+
+
+    <!-- Área dos mapas -->
     <FrameLayout
         android:id="@+id/mapContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginVertical="8dp"
         android:background="@color/card_bg"
-        app:layout_constraintTop_toBottomOf="@id/tvViewportLabel"
         app:layout_constraintBottom_toTopOf="@id/bottomSheet"
+        app:layout_constraintTop_toBottomOf="@id/tvViewportLabel"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:gravity="center"
-            android:orientation="vertical">
+        <!-- Mapa externo do campus -->
+        <com.example.myapplication.view.CampusMapView
+            android:id="@+id/campusMapView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="visible" />
 
-            <ImageView
-                android:id="@+id/imgMapIcon"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:src="@android:drawable/ic_dialog_map"
-                app:tint="@color/primary_blue" />
+        <!-- Mapa interno do Bloco D -->
+        <com.example.myapplication.view.IndoorMapView
+            android:id="@+id/indoorMapView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="Mapa em desenvolvimento"
-                android:textColor="@color/text_dark"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvMapDescription"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="A visualização do campus será exibida aqui."
-                android:textColor="@color/text_muted"
-                android:textSize="13sp" />
-        </LinearLayout>
     </FrameLayout>
 
-    <!-- Bottom Instructions Sheet -->
+
+    <!-- Painel inferior de instruções -->
     <LinearLayout
         android:id="@+id/bottomSheet"
         android:layout_width="0dp"
@@ -225,23 +213,36 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
+        <!-- Título do painel -->
         <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="INSTRUÇÕES DE NAVEGAÇÃO"
             android:textColor="@color/primary_blue"
             android:textSize="10sp"
             android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/tvInstructions"
-            android:layout_width="wrap_content"
+        <!-- Área rolável das instruções -->
+        <ScrollView
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Rota pronta para iniciar. As orientações aparecerão nesta área."
-            android:textColor="#FFFFFF"
-            android:textSize="13sp" />
+            android:layout_marginTop="8dp"
+            android:maxHeight="140dp"
+            android:fillViewport="true"
+            android:scrollbars="vertical">
 
+            <TextView
+                android:id="@+id/tvInstructions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Rota pronta para iniciar. As orientações aparecerão nesta área."
+                android:textColor="#FFFFFF"
+                android:textSize="13sp"
+                android:lineSpacingExtra="5dp" />
+
+        </ScrollView>
+
+        <!-- Botão para voltar e selecionar outra rota -->
         <Button
             android:id="@+id/btnAlterarRota"
             android:layout_width="match_parent"
@@ -252,6 +253,8 @@
             android:textColor="@color/text_dark"
             android:textSize="14sp"
             android:textStyle="bold" />
+
     </LinearLayout>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -109,6 +109,7 @@
                 android:textSize="11sp"
                 android:textStyle="bold" />
 
+            <!-- Field: Destino -->
             <Spinner
                 android:id="@+id/spOrigem"
                 android:layout_width="match_parent"
@@ -117,7 +118,6 @@
                 android:background="@color/card_bg"
                 android:paddingHorizontal="12dp" />
 
-            <!-- Field: Destino -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

@@ -21,7 +21,7 @@ public class MainActivity extends AppCompatActivity {
         spDestino = findViewById(R.id.spDestino);
         btnTracarRota = findViewById(R.id.btnTracarRota);
 
-        String[] origens = {"Entrada Bloco C", "Entrada Bloco Alfa"};
+        String[] origens = {"Entrada Bloco C", "Entrada Bloco B"};
         String[] destinos = {"Laboratório 01", "Laboratório 02", "Laboratório 03"};
 
         // Utiliza o spinner_item.xml personalizado em vez do padrão do Android
