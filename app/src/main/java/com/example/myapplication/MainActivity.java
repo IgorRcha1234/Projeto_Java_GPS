@@ -2,43 +2,40 @@ package com.example.myapplication;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.Spinner;
+
 import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
-
-    private Spinner spOrigem, spDestino;
-    private Button btnTracarRota;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        spOrigem = findViewById(R.id.spOrigem);
-        spDestino = findViewById(R.id.spDestino);
-        btnTracarRota = findViewById(R.id.btnTracarRota);
+        // --- BOTÕES DO TÉRREO (Andar 1) ---
+        configurarBotaoDestino(R.id.btnLab01, "Laboratório 01", 1);
+        configurarBotaoDestino(R.id.btnLab02, "Laboratório 02", 1);
+        configurarBotaoDestino(R.id.btnLab03, "Laboratório 03", 1);
 
-        String[] origens = {"Entrada Bloco C", "Entrada Bloco B"};
-        String[] destinos = {"Laboratório 01", "Laboratório 02", "Laboratório 03"};
+        // --- BOTÕES DO SEGUNDO ANDAR (Andar 2) ---
+        configurarBotaoDestino(R.id.btnLab04, "Laboratório 04", 2);
+        configurarBotaoDestino(R.id.btnLab05, "Laboratório 05", 2);
+        configurarBotaoDestino(R.id.btnSala201, "Sala 201", 2);
+        configurarBotaoDestino(R.id.btnSala202, "Sala 202", 2);
+        configurarBotaoDestino(R.id.btnSala203, "Sala 203", 2);
+        configurarBotaoDestino(R.id.btnBiblioteca, "Biblioteca", 2);
+    }
 
-        // Utiliza o spinner_item.xml personalizado em vez do padrão do Android
-        ArrayAdapter<String> adapterOrigem = new ArrayAdapter<>(this, R.layout.spinner_item, origens);
-        adapterOrigem.setDropDownViewResource(R.layout.spinner_item);
-
-        ArrayAdapter<String> adapterDestino = new ArrayAdapter<>(this, R.layout.spinner_item, destinos);
-        adapterDestino.setDropDownViewResource(R.layout.spinner_item);
-
-        spOrigem.setAdapter(adapterOrigem);
-        spDestino.setAdapter(adapterDestino);
-
-        btnTracarRota.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, RouteActivity.class);
-            intent.putExtra("ORIGEM", spOrigem.getSelectedItem().toString());
-            intent.putExtra("DESTINO", spDestino.getSelectedItem().toString());
-            startActivity(intent);
-        });
+    private void configurarBotaoDestino(int buttonId, String nomeDestino, int andar) {
+        Button btn = findViewById(buttonId);
+        if (btn != null) {
+            btn.setOnClickListener(v -> {
+                Intent intent = new Intent(MainActivity.this, RouteActivity.class);
+                intent.putExtra("DESTINO", nomeDestino);
+                intent.putExtra("ANDAR", andar);
+                startActivity(intent);
+            });
+        }
     }
 }

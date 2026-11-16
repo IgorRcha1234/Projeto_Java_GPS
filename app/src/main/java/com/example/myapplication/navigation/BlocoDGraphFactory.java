@@ -1,93 +1,43 @@
-
 package com.example.myapplication.navigation;
 
+import com.example.myapplication.model.Edge;
 import com.example.myapplication.model.Node;
 
 public class BlocoDGraphFactory {
 
-    private static Node criarNo(
-            String id,
-            float x,
-            float y
-    ) {
-        float escalaX = 2080f / 1468f;
-        float escalaY = 2900f / 2047f;
-
-        return new Node(
-                id,
-                x * escalaX,
-                y * escalaY
-        );
-    }
-
     public static BuildingGraph criarGrafo() {
-
-
         BuildingGraph grafo = new BuildingGraph();
 
-// Entrada principal
-        grafo.adicionarNo(
-                criarNo("ENTRADA", 725, 1760)
-        );
+        // Adiciona os nós do térreo
+        grafo.adicionarNo(new Node("ENTRADA", 500, 950));
+        grafo.adicionarNo(new Node("C_INFERIOR", 500, 800));
+        grafo.adicionarNo(new Node("C_CENTRAL", 500, 500));
+        grafo.adicionarNo(new Node("C_SUPERIOR", 500, 200));
+        grafo.adicionarNo(new Node("C_ESQUERDA", 250, 500));
+        grafo.adicionarNo(new Node("LAB01_PORTA1", 200, 300));
+        grafo.adicionarNo(new Node("LAB01_PORTA2", 200, 400));
+        grafo.adicionarNo(new Node("LAB02_PORTA", 200, 600));
+        grafo.adicionarNo(new Node("LAB03_PORTA", 200, 750));
 
-// Corredor central
-        grafo.adicionarNo(
-                criarNo("C_INFERIOR", 725, 1653)
-        );
-
-        grafo.adicionarNo(
-                criarNo("C_CENTRAL", 725, 1432)
-        );
-
-        grafo.adicionarNo(
-                criarNo("C_SUPERIOR", 725, 1252)
-        );
-
-// Corredor lateral esquerdo
-        grafo.adicionarNo(
-                criarNo("C_ESQUERDA", 146, 1432)
-        );
-
-// Portas do Lab 01
-        grafo.adicionarNo(
-                criarNo("LAB01_PORTA1", 848, 1252)
-        );
-
-        grafo.adicionarNo(
-                criarNo("LAB01_PORTA2", 848, 1653)
-        );
-
-// Porta do Lab 02
-        grafo.adicionarNo(
-                criarNo("LAB02_PORTA", 146, 1492)
-        );
-
-// Porta do Lab 03
-        grafo.adicionarNo(
-                criarNo("LAB03_PORTA", 146, 1377)
-        );
-
-
-        // 5. Conexões do corredor principal
-        grafo.conectar("ENTRADA", "C_INFERIOR");
-
-        grafo.conectar("C_INFERIOR", "C_CENTRAL");
-
-        grafo.conectar("C_CENTRAL", "C_SUPERIOR");
-
-        // 6. Acessos ao Laboratório 01
-        grafo.conectar("C_INFERIOR", "LAB01_PORTA2");
-
-        grafo.conectar("C_SUPERIOR", "LAB01_PORTA1");
-
-        // 7. Corredor lateral
-        grafo.conectar("C_CENTRAL", "C_ESQUERDA");
-
-        // 8. Acessos aos Labs 02 e 03
-        grafo.conectar("C_ESQUERDA", "LAB02_PORTA");
-
-        grafo.conectar("C_ESQUERDA", "LAB03_PORTA");
+        // Conexões (Arestas) usando o método auxiliar bidirecional
+        conectar(grafo, "ENTRADA", "C_INFERIOR");
+        conectar(grafo, "C_INFERIOR", "C_CENTRAL");
+        conectar(grafo, "C_CENTRAL", "C_SUPERIOR");
+        conectar(grafo, "C_CENTRAL", "C_ESQUERDA");
+        conectar(grafo, "C_ESQUERDA", "LAB01_PORTA1");
+        conectar(grafo, "C_ESQUERDA", "LAB01_PORTA2");
+        conectar(grafo, "C_ESQUERDA", "LAB02_PORTA");
+        conectar(grafo, "C_ESQUERDA", "LAB03_PORTA");
 
         return grafo;
+    }
+
+    private static void conectar(BuildingGraph grafo, String idOrigem, String idDestino) {
+        Node origem = grafo.buscarNo(idOrigem);
+        Node destino = grafo.buscarNo(idDestino);
+        if (origem != null && destino != null) {
+            grafo.adicionarAresta(new Edge(origem, destino));
+            grafo.adicionarAresta(new Edge(destino, origem));
+        }
     }
 }

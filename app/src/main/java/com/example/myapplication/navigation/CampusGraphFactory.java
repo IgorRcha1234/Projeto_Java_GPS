@@ -1,6 +1,6 @@
-
 package com.example.myapplication.navigation;
 
+import com.example.myapplication.model.Edge;
 import com.example.myapplication.model.Node;
 
 public class CampusGraphFactory {
@@ -122,43 +122,27 @@ public class CampusGraphFactory {
         // ===================================
 
         // Caminho da entrada central
-        grafo.conectar(
-                "ENTRADA_CENTRAL",
-                "C_CENTRAL_INFERIOR"
-        );
-
-        grafo.conectar(
-                "C_CENTRAL_INFERIOR",
-                "C_ENCONTRO"
-        );
+        conectar(grafo, "ENTRADA_CENTRAL", "C_CENTRAL_INFERIOR");
+        conectar(grafo, "C_CENTRAL_INFERIOR", "C_ENCONTRO");
 
         // Caminho da entrada direita
-        grafo.conectar(
-                "ENTRADA_DIREITA",
-                "C_DIREITA"
-        );
-
-        grafo.conectar(
-                "C_DIREITA",
-                "C_ENCONTRO"
-        );
+        conectar(grafo, "ENTRADA_DIREITA", "C_DIREITA");
+        conectar(grafo, "C_DIREITA", "C_ENCONTRO");
 
         // Trecho compartilhado até o Bloco D
-        grafo.conectar(
-                "C_ENCONTRO",
-                "C_SUBIDA"
-        );
-
-        grafo.conectar(
-                "C_SUBIDA",
-                "C_FRENTE_D"
-        );
-
-        grafo.conectar(
-                "C_FRENTE_D",
-                "BLOCO_D"
-        );
+        conectar(grafo, "C_ENCONTRO", "C_SUBIDA");
+        conectar(grafo, "C_SUBIDA", "C_FRENTE_D");
+        conectar(grafo, "C_FRENTE_D", "BLOCO_D");
 
         return grafo;
+    }
+
+    private static void conectar(BuildingGraph grafo, String idOrigem, String idDestino) {
+        Node origem = grafo.buscarNo(idOrigem);
+        Node destino = grafo.buscarNo(idDestino);
+        if (origem != null && destino != null) {
+            grafo.adicionarAresta(new Edge(origem, destino));
+            grafo.adicionarAresta(new Edge(destino, origem));
+        }
     }
 }

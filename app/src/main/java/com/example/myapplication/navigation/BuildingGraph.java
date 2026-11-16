@@ -1,8 +1,7 @@
-
 package com.example.myapplication.navigation;
 
-import com.example.myapplication.model.Node;
 import com.example.myapplication.model.Edge;
+import com.example.myapplication.model.Node;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,60 +9,29 @@ import java.util.List;
 import java.util.Map;
 
 public class BuildingGraph {
+    private Map<String, Node> nos = new HashMap<>();
+    private Map<String, List<Edge>> adjacencias = new HashMap<>();
 
-    // Guarda os nós pelo identificador
-    private final Map<String, Node> nos = new HashMap<>();
-
-    // Guarda as conexões de cada nó
-    private final Map<String, List<Edge>> adjacencias =
-            new HashMap<>();
-
-    // Adiciona um nó ao grafo
     public void adicionarNo(Node no) {
-        if (nos.containsKey(no.getId())) {
-            throw new IllegalArgumentException(
-                    "Nó duplicado: " + no.getId()
-            );
-        }
-
         nos.put(no.getId(), no);
-        adjacencias.put(no.getId(), new ArrayList<>());
+        adjacencias.putIfAbsent(no.getId(), new ArrayList<>());
     }
 
-    // Conecta dois nós nos dois sentidos
-    public void conectar(String idOrigem, String idDestino) {
-
-        Node origem = nos.get(idOrigem);
-        Node destino = nos.get(idDestino);
-
-        if (origem == null || destino == null) {
-            throw new IllegalArgumentException(
-                    "Um dos nós não existe no grafo."
-            );
-        }
-
-        adjacencias.get(idOrigem).add(
-                new Edge(origem, destino)
-        );
-
-        adjacencias.get(idDestino).add(
-                new Edge(destino, origem)
-        );
+    public void adicionarAresta(Edge aresta) {
+        String origemId = aresta.getOrigem().getId();
+        adjacencias.putIfAbsent(origemId, new ArrayList<>());
+        adjacencias.get(origemId).add(aresta);
     }
 
-    // Busca um nó pelo identificador
     public Node buscarNo(String id) {
         return nos.get(id);
     }
 
-    // Retorna as conexões de um nó
     public List<Edge> obterVizinhos(String id) {
-        List<Edge> conexoes = adjacencias.get(id);
+        return adjacencias.getOrDefault(id, new ArrayList<>());
+    }
 
-        if (conexoes == null) {
-            return new ArrayList<>();
-        }
-
-        return new ArrayList<>(conexoes);
+    public List<Node> obterTodosNos() {
+        return new ArrayList<>(nos.values());
     }
 }
