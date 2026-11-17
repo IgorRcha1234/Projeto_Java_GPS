@@ -1,4 +1,3 @@
-
 package com.example.myapplication;
 
 import android.content.res.ColorStateList;
@@ -7,18 +6,23 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.ScrollView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.myapplication.model.Node;
 import com.example.myapplication.navigation.BuildingGraph;
 import com.example.myapplication.navigation.BlocoDGraphFactory;
+import com.example.myapplication.navigation.BlocoDAndar2GraphFactory;
 import com.example.myapplication.navigation.CampusGraphFactory;
 import com.example.myapplication.navigation.NavigationInstructions;
 import com.example.myapplication.navigation.RouteCalculator;
+
 import com.example.myapplication.view.CampusMapView;
 import com.example.myapplication.view.IndoorMapView;
+import com.example.myapplication.view.Andar2MapView;
 
 import java.text.Normalizer;
 import java.util.Collections;
@@ -28,31 +32,47 @@ import java.util.Locale;
 public class RouteActivity extends AppCompatActivity {
 
     // =====================================
-    // COMPONENTES DA INTERFACE
+    // 1. COMPONENTES DA INTERFACE
     // =====================================
 
     private TextView tvSummaryOrigem;
     private TextView tvSummaryDestino;
     private TextView tvViewportLabel;
     private TextView tvInstructions;
+    private TextView tvAndarAtual;
 
     private Button btnTabCampus;
     private Button btnTabBlocoD;
-    private Button btnAlterarRota;
+    private Button btnToggleInstructions;
+    private Button btnTerreo;
+    private Button btnAndar2;
 
     private ImageButton btnBack;
+    private ImageButton btnLayers;
 
-    // Mapas externo e interno
+    private LinearLayout floorSelector;
+    private LinearLayout floorOptions;
+
+    private ScrollView scrollInstructions;
+
+    // Mapas
     private CampusMapView campusMapView;
     private IndoorMapView indoorMapView;
+    private Andar2MapView andar2MapView;
 
-    // Instruções geradas automaticamente
+    // Instruções
     private String instrucoesCampus = "";
     private String instrucoesInternas = "";
+    private String instrucoesAndar2 =
+            "O destino selecionado não está neste andar.";
+
+    // Controle de navegação
+    private int andarAtual = 0;
+    private boolean modoAcessivel = false;
 
 
     // =====================================
-    // 1. INICIALIZAÇÃO
+    // 2. INICIALIZAÇÃO
     // =====================================
 
     @Override
@@ -61,23 +81,43 @@ public class RouteActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_route);
 
-        // Componentes do XML
         tvSummaryOrigem = findViewById(R.id.tvSummaryOrigem);
         tvSummaryDestino = findViewById(R.id.tvSummaryDestino);
         tvViewportLabel = findViewById(R.id.tvViewportLabel);
         tvInstructions = findViewById(R.id.tvInstructions);
+        tvAndarAtual = findViewById(R.id.tvAndarAtual);
 
         btnTabCampus = findViewById(R.id.btnTabCampus);
         btnTabBlocoD = findViewById(R.id.btnTabBlocoD);
-        btnAlterarRota = findViewById(R.id.btnAlterarRota);
-        btnBack = findViewById(R.id.btnBack);
 
+        btnToggleInstructions =
+                findViewById(R.id.btnToggleInstructions);
+
+        btnBack = findViewById(R.id.btnBack);
+        btnLayers = findViewById(R.id.btnLayers);
+
+        btnTerreo = findViewById(R.id.btnTerreo);
+        btnAndar2 = findViewById(R.id.btnAndar2);
+
+        floorSelector = findViewById(R.id.floorSelector);
+        floorOptions = findViewById(R.id.floorOptions);
+
+        scrollInstructions =
+                findViewById(R.id.scrollInstructions);
+
+        // Carrega os três mapas
         campusMapView = findViewById(R.id.campusMapView);
         indoorMapView = findViewById(R.id.indoorMapView);
+        andar2MapView = findViewById(R.id.andar2MapView);
 
-        // Recebe origem e destino da MainActivity
+        // Recebe os dados da MainActivity
         String origem = getIntent().getStringExtra("ORIGEM");
         String destino = getIntent().getStringExtra("DESTINO");
+
+        modoAcessivel = getIntent().getBooleanExtra(
+                "ACESSIBILIDADE",
+                false
+        );
 
         if (origem != null) {
             tvSummaryOrigem.setText(origem);
@@ -87,45 +127,87 @@ public class RouteActivity extends AppCompatActivity {
             tvSummaryDestino.setText(destino);
         }
 
-        // Calcula os dois percursos
+        // Calcula o percurso externo
         calcularRotaCampus(origem);
-        calcularRotaInterna(destino);
 
-        // Botão Campus
+        // Verifica em qual andar está o destino
+        if (identificarDestinoAndar2(destino) != null) {
+
+            calcularRotaEntreAndares(destino);
+
+        } else {
+
+            calcularRotaInterna(destino);
+        }
+
+        // Botões das abas
         btnTabCampus.setOnClickListener(
                 v -> selecionarAba(true)
         );
 
-        // Botão Bloco D
         btnTabBlocoD.setOnClickListener(
                 v -> selecionarAba(false)
         );
 
-        // Voltar à seleção de rota
-        btnAlterarRota.setOnClickListener(
-                v -> finish()
+        // Botão de camadas
+        btnLayers.setOnClickListener(v -> {
+
+            if (floorOptions.getVisibility() == View.VISIBLE) {
+
+                floorOptions.setVisibility(View.GONE);
+
+            } else {
+
+                floorOptions.setVisibility(View.VISIBLE);
+            }
+        });
+
+        // Seleção de andar
+        btnTerreo.setOnClickListener(
+                v -> selecionarAndar(0)
         );
 
+        btnAndar2.setOnClickListener(
+                v -> selecionarAndar(2)
+        );
+
+        // Abre ou fecha o painel de instruções
+        btnToggleInstructions.setOnClickListener(v -> {
+
+            boolean aberto =
+                    scrollInstructions.getVisibility()
+                            == View.VISIBLE;
+
+            scrollInstructions.setVisibility(
+                    aberto ? View.GONE : View.VISIBLE
+            );
+
+            btnToggleInstructions.setText(
+                    aberto
+                            ? "INSTRUÇÕES DE NAVEGAÇÃO  ▲"
+                            : "INSTRUÇÕES DE NAVEGAÇÃO  ▼"
+            );
+        });
+
+        // Volta para a tela inicial
         btnBack.setOnClickListener(
                 v -> finish()
         );
 
-        // Inicia mostrando o Campus
+        // Inicia no mapa externo
         selecionarAba(true);
     }
 
 
     // =====================================
-    // 2. CALCULAR ROTA EXTERNA
+    // 3. CALCULAR ROTA EXTERNA
     // =====================================
 
     private void calcularRotaCampus(String origem) {
 
-        // Resolução real do mapa externo
         int largura = campusMapView.getLarguraMapa();
         int altura = campusMapView.getAlturaMapa();
 
-        // Confirma que a imagem foi carregada
         if (largura <= 0 || altura <= 0) {
 
             instrucoesCampus =
@@ -135,27 +217,22 @@ public class RouteActivity extends AppCompatActivity {
             return;
         }
 
-        // Monta o grafo do Campus
         BuildingGraph grafo =
                 CampusGraphFactory.criarGrafo(largura, altura);
 
         RouteCalculator calculadora =
                 new RouteCalculator(grafo);
 
-        // Identifica a entrada selecionada
         String idOrigem = identificarEntrada(origem);
 
         if (idOrigem == null) {
 
-            instrucoesCampus =
-                    "Origem não reconhecida. "
-                            + "Confira a entrada selecionada.";
+            instrucoesCampus = "Origem não reconhecida.";
 
             campusMapView.definirRota(null);
             return;
         }
 
-        // Calcula o percurso com Dijkstra
         List<Node> caminho = calculadora.calcularRota(
                 idOrigem,
                 "BLOCO_D"
@@ -163,16 +240,13 @@ public class RouteActivity extends AppCompatActivity {
 
         if (!caminho.isEmpty()) {
 
-            // Envia o caminho para desenhar a linha azul
             campusMapView.definirRota(caminho);
 
-            // Identifica o nome da entrada
             String nomeEntrada =
                     idOrigem.equals("ENTRADA_DIREITA")
                             ? "Entrada Bloco B"
                             : "Entrada Bloco C";
 
-            // Gera as instruções de direção
             instrucoesCampus =
                     NavigationInstructions.gerarInstrucoes(
                             caminho,
@@ -180,24 +254,22 @@ public class RouteActivity extends AppCompatActivity {
                             "Bloco D"
                     );
 
-            // Orienta a continuar pelo mapa interno
             instrucoesCampus +=
-                    "\nDepois, selecione a aba Bloco D "
-                            + "para seguir até o laboratório.";
+                    "\nAo chegar, selecione a aba Bloco D "
+                            + "para continuar o percurso.";
 
         } else {
 
             campusMapView.definirRota(null);
 
             instrucoesCampus =
-                    "Não foi encontrado um caminho "
-                            + "até o Bloco D.";
+                    "Não foi encontrado um caminho até o Bloco D.";
         }
     }
 
 
     // =====================================
-    // 3. IDENTIFICAR A ENTRADA
+    // 4. IDENTIFICAR ENTRADA
     // =====================================
 
     private String identificarEntrada(String origem) {
@@ -206,22 +278,14 @@ public class RouteActivity extends AppCompatActivity {
             return null;
         }
 
-        // Remove acentos e padroniza o texto
-        String texto = Normalizer.normalize(
-                        origem,
-                        Normalizer.Form.NFD
-                ).replaceAll("\\p{M}+", "")
-                .toLowerCase(Locale.ROOT)
-                .trim();
+        String texto = normalizarTexto(origem);
 
-        // Entrada Bloco B = entrada direita
         if (texto.contains("bloco b")
                 || texto.contains("entrada direita")) {
 
             return "ENTRADA_DIREITA";
         }
 
-        // Entrada Bloco C = entrada central
         if (texto.contains("bloco c")
                 || texto.contains("entrada central")) {
 
@@ -233,12 +297,11 @@ public class RouteActivity extends AppCompatActivity {
 
 
     // =====================================
-    // 4. CALCULAR ROTA INTERNA
+    // 5. ROTAS DOS LABORATÓRIOS DO TÉRREO
     // =====================================
 
     private void calcularRotaInterna(String destino) {
 
-        // Monta o grafo interno
         BuildingGraph grafo =
                 BlocoDGraphFactory.criarGrafo();
 
@@ -249,12 +312,11 @@ public class RouteActivity extends AppCompatActivity {
 
         String laboratorio = "";
 
-        // Extrai o número do laboratório
         String numero = destino == null
                 ? ""
                 : destino.replaceAll("[^0-9]", "");
 
-        // LABORATÓRIO 01 - DUAS PORTAS
+        // Laboratório 01
         if (numero.equals("01") || numero.equals("1")) {
 
             laboratorio = "Laboratório 01";
@@ -269,12 +331,11 @@ public class RouteActivity extends AppCompatActivity {
                     "LAB01_PORTA2"
             );
 
-            // Escolhe o percurso mais curto
             caminho = calcularDistancia(rota1)
                     <= calcularDistancia(rota2)
                     ? rota1 : rota2;
 
-            // LABORATÓRIO 02
+            // Laboratório 02
         } else if (numero.equals("02")
                 || numero.equals("2")) {
 
@@ -285,7 +346,7 @@ public class RouteActivity extends AppCompatActivity {
                     "LAB02_PORTA"
             );
 
-            // LABORATÓRIO 03
+            // Laboratório 03
         } else if (numero.equals("03")
                 || numero.equals("3")) {
 
@@ -297,12 +358,16 @@ public class RouteActivity extends AppCompatActivity {
             );
         }
 
+        // Não existe percurso no segundo andar
+        andar2MapView.definirRota(null);
+
+        instrucoesAndar2 =
+                "O destino selecionado está no térreo.";
+
         if (!caminho.isEmpty()) {
 
-            // Desenha a rota azul no mapa interno
             indoorMapView.definirRota(caminho);
 
-            // Gera as orientações do caminho
             instrucoesInternas =
                     NavigationInstructions.gerarInstrucoes(
                             caminho,
@@ -315,14 +380,180 @@ public class RouteActivity extends AppCompatActivity {
             indoorMapView.definirRota(null);
 
             instrucoesInternas =
-                    "Não foi possível calcular a rota "
-                            + "até o laboratório selecionado.";
+                    "Não foi possível calcular a rota interna.";
         }
     }
 
 
     // =====================================
-    // 5. CALCULAR DISTÂNCIA DA ROTA
+    // 6. IDENTIFICAR DESTINOS DO ANDAR 2
+    // =====================================
+
+    private String identificarDestinoAndar2(String destino) {
+
+        if (destino == null) {
+            return null;
+        }
+
+        String texto = normalizarTexto(destino);
+        String numero = texto.replaceAll("[^0-9]", "");
+
+        if (texto.contains("biblioteca")) {
+            return "BIBLIOTECA_PORTA";
+        }
+
+        if (texto.contains("estudos")) {
+            return "ESTUDOS_PORTA";
+        }
+
+        switch (numero) {
+
+            case "04":
+            case "4":
+                return "LAB04_PORTA";
+
+            case "05":
+            case "5":
+                return "LAB05_PORTA";
+
+            case "201":
+                return "SALA201_PORTA";
+
+            case "202":
+                return "SALA202_PORTA";
+
+            case "203":
+                return "SALA203_PORTA";
+
+            default:
+                return null;
+        }
+    }
+
+
+    // =====================================
+    // 7. NAVEGAÇÃO ENTRE ANDARES
+    // =====================================
+
+    private void calcularRotaEntreAndares(String destino) {
+
+        String idDestino =
+                identificarDestinoAndar2(destino);
+
+        if (idDestino == null) {
+            return;
+        }
+
+        // Escolhe o tipo de acesso
+        String acessoTerreo = modoAcessivel
+                ? "ELEVADOR_TERREO"
+                : "ESCADA_TERREO";
+
+        String acessoAndar2 = modoAcessivel
+                ? "ELEVADOR_ANDAR2"
+                : "ESCADA_ANDAR2";
+
+        String nomeAcesso = modoAcessivel
+                ? "elevador"
+                : "escada";
+
+
+        // PRIMEIRO TRECHO: TÉRREO
+
+        BuildingGraph grafoTerreo =
+                BlocoDGraphFactory.criarGrafo();
+
+        RouteCalculator calculadoraTerreo =
+                new RouteCalculator(grafoTerreo);
+
+        List<Node> rotaTerreo =
+                calculadoraTerreo.calcularRota(
+                        "ENTRADA",
+                        acessoTerreo
+                );
+
+
+        // SEGUNDO TRECHO: ANDAR 2
+
+        BuildingGraph grafoAndar2 =
+                BlocoDAndar2GraphFactory.criarGrafo();
+
+        RouteCalculator calculadoraAndar2 =
+                new RouteCalculator(grafoAndar2);
+
+        List<Node> rotaAndar2 =
+                calculadoraAndar2.calcularRota(
+                        acessoAndar2,
+                        idDestino
+                );
+
+
+        // VALIDA OS DOIS PERCURSOS
+
+        if (rotaTerreo.isEmpty() || rotaAndar2.isEmpty()) {
+
+            indoorMapView.definirRota(null);
+            andar2MapView.definirRota(null);
+
+            instrucoesInternas =
+                    "Não foi possível conectar os andares.";
+
+            instrucoesAndar2 =
+                    "Percurso indisponível.";
+
+            return;
+        }
+
+
+        // DESENHA AS ROTAS
+
+        indoorMapView.definirRota(rotaTerreo);
+        andar2MapView.definirRota(rotaAndar2);
+
+
+        // INSTRUÇÕES DO TÉRREO
+
+        instrucoesInternas =
+                NavigationInstructions.gerarInstrucoes(
+                        rotaTerreo,
+                        "entrada do Bloco D",
+                        nomeAcesso
+                );
+
+        if (modoAcessivel) {
+
+            instrucoesInternas +=
+                    "\nUtilize o elevador para subir "
+                            + "até o segundo andar.";
+
+        } else {
+
+            instrucoesInternas +=
+                    "\nSuba pela escada até o segundo andar.";
+        }
+
+        instrucoesInternas +=
+                "\nAo chegar, toque no ícone de camadas "
+                        + "e selecione o andar 2.";
+
+
+        // INSTRUÇÕES DO SEGUNDO ANDAR
+
+        String nomeOrigem = modoAcessivel
+                ? "saída do elevador"
+                : "saída da escada";
+
+        instrucoesAndar2 =
+                NavigationInstructions.gerarInstrucoes(
+                        rotaAndar2,
+                        nomeOrigem,
+                        destino
+                );
+    }
+
+
+    // =====================================
+    // 8. CALCULAR DISTÂNCIA
     // =====================================
 
     private double calcularDistancia(List<Node> caminho) {
@@ -349,7 +580,22 @@ public class RouteActivity extends AppCompatActivity {
 
 
     // =====================================
-    // 6. ALTERNAR ENTRE AS ABAS
+    // 9. NORMALIZAR TEXTOS
+    // =====================================
+
+    private String normalizarTexto(String texto) {
+
+        return Normalizer.normalize(
+                        texto,
+                        Normalizer.Form.NFD
+                ).replaceAll("\\p{M}+", "")
+                .toLowerCase(Locale.ROOT)
+                .trim();
+    }
+
+
+    // =====================================
+    // 10. ALTERNAR ENTRE ABAS
     // =====================================
 
     private void selecionarAba(boolean isCampus) {
@@ -360,18 +606,21 @@ public class RouteActivity extends AppCompatActivity {
         int textoSelecionado = Color.parseColor("#0F172A");
         int textoInativo = Color.parseColor("#64748B");
 
+        floorOptions.setVisibility(View.GONE);
+
         if (isCampus) {
 
-            // Mostra mapa externo
             campusMapView.setVisibility(View.VISIBLE);
             indoorMapView.setVisibility(View.GONE);
+            andar2MapView.setVisibility(View.GONE);
 
+            floorSelector.setVisibility(View.GONE);
+
+            tvAndarAtual.setText("Campus");
             tvViewportLabel.setText("VISÃO DO CAMPUS");
 
-            // Mostra as instruções externas
-            tvInstructions.setText(instrucoesCampus);
+            atualizarInstrucoes(instrucoesCampus);
 
-            // Destaca a aba Campus
             btnTabCampus.setBackgroundTintList(
                     ColorStateList.valueOf(corSelecionada)
             );
@@ -386,16 +635,12 @@ public class RouteActivity extends AppCompatActivity {
 
         } else {
 
-            // Mostra mapa interno
             campusMapView.setVisibility(View.GONE);
-            indoorMapView.setVisibility(View.VISIBLE);
 
-            tvViewportLabel.setText("BLOCO D · TÉRREO");
+            floorSelector.setVisibility(View.VISIBLE);
 
-            // Mostra as instruções internas
-            tvInstructions.setText(instrucoesInternas);
+            selecionarAndar(andarAtual);
 
-            // Destaca a aba Bloco D
             btnTabBlocoD.setBackgroundTintList(
                     ColorStateList.valueOf(corSelecionada)
             );
@@ -409,6 +654,90 @@ public class RouteActivity extends AppCompatActivity {
             btnTabCampus.setTextColor(textoInativo);
         }
     }
+
+
+    // =====================================
+    // 11. SELECIONAR ANDAR
+    // =====================================
+
+    private void selecionarAndar(int andar) {
+
+        andarAtual = andar;
+
+        campusMapView.setVisibility(View.GONE);
+
+        floorSelector.setVisibility(View.VISIBLE);
+        floorOptions.setVisibility(View.GONE);
+
+        int azul = Color.parseColor("#2563EB");
+        int branco = Color.WHITE;
+        int escuro = Color.parseColor("#0F172A");
+
+        if (andar == 0) {
+
+            // Mostra o térreo
+            indoorMapView.setVisibility(View.VISIBLE);
+            andar2MapView.setVisibility(View.GONE);
+
+            tvAndarAtual.setText("Térreo");
+
+            tvViewportLabel.setText(
+                    "BLOCO D - TÉRREO"
+            );
+
+            atualizarInstrucoes(instrucoesInternas);
+
+            btnTerreo.setBackgroundTintList(
+                    ColorStateList.valueOf(azul)
+            );
+
+            btnTerreo.setTextColor(branco);
+
+            btnAndar2.setBackgroundTintList(
+                    ColorStateList.valueOf(branco)
+            );
+
+            btnAndar2.setTextColor(escuro);
+
+        } else {
+
+            // Mostra o segundo andar
+            indoorMapView.setVisibility(View.GONE);
+            andar2MapView.setVisibility(View.VISIBLE);
+
+            tvAndarAtual.setText("2º andar");
+
+            tvViewportLabel.setText(
+                    "BLOCO D - SEGUNDO ANDAR"
+            );
+
+            atualizarInstrucoes(instrucoesAndar2);
+
+            btnAndar2.setBackgroundTintList(
+                    ColorStateList.valueOf(azul)
+            );
+
+            btnAndar2.setTextColor(branco);
+
+            btnTerreo.setBackgroundTintList(
+                    ColorStateList.valueOf(branco)
+            );
+
+            btnTerreo.setTextColor(escuro);
+        }
+    }
+
+
+    // =====================================
+    // 12. ATUALIZAR INSTRUÇÕES
+    // =====================================
+
+    private void atualizarInstrucoes(String instrucoes) {
+
+        tvInstructions.setText(instrucoes);
+
+        scrollInstructions.post(
+                () -> scrollInstructions.scrollTo(0, 0)
+        );
+    }
 }
-
-

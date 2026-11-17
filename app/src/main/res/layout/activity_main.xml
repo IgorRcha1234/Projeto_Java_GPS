@@ -7,6 +7,8 @@
     android:padding="24dp">
 
     <!-- Top Header -->
+
+    <!-- CABEÇALHO UNIWAY -->
     <LinearLayout
         android:id="@+id/topHeader"
         android:layout_width="match_parent"
@@ -14,13 +16,13 @@
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
+        <!-- Logo da universidade -->
         <ImageView
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="@color/icon_bg_dark"
-            android:padding="8dp"
-            android:src="@android:drawable/ic_menu_compass"
-            app:tint="#FFFFFF" />
+            android:layout_width="58dp"
+            android:layout_height="58dp"
+            android:scaleType="centerInside"
+            android:contentDescription="Logo da UNICID"
+            android:src="@drawable/uni" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -29,34 +31,45 @@
             android:layout_weight="1"
             android:orientation="vertical">
 
+            <!-- Subtítulo -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:letterSpacing="0.1"
-                android:text="CAMPUS GUIDE"
-                android:textColor="@color/text_muted"
+                android:text="UNICID • CAMPUS"
+                android:textColor="#FFFFFF"
                 android:textSize="11sp"
                 android:textStyle="bold" />
 
-            <TextView
+            <!-- Nome do aplicativo -->
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Indoor Navigation"
-                android:textColor="@color/text_dark"
-                android:textSize="18sp"
-                android:textStyle="bold" />
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:includeFontPadding="false"
+                    android:text="Uni"
+                    android:textColor="#0F172A"
+                    android:textSize="36sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:includeFontPadding="false"
+                    android:text="Way"
+                    android:textColor="#009687"
+                    android:textSize="36sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
         </LinearLayout>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@color/border_color"
-            android:paddingHorizontal="10dp"
-            android:paddingVertical="4dp"
-            android:text="Térreo"
-            android:textColor="@color/text_muted"
-            android:textSize="12sp" />
     </LinearLayout>
+
 
     <ScrollView
         android:layout_width="match_parent"
@@ -86,7 +99,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="Encontre seu\nlaboratório"
+                android:text="Encontre seu destino"
                 android:textColor="@color/text_dark"
                 android:textSize="28sp"
                 android:textStyle="bold" />
@@ -95,7 +108,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="Escolha seu ponto de partida e deixe a gente mostrar o melhor caminho."
+                android:text="Selecione sua origem e seu destino para iniciar a navegação."
                 android:textColor="@color/text_muted"
                 android:textSize="14sp" />
 
@@ -134,6 +147,23 @@
                 android:layout_marginTop="6dp"
                 android:background="@color/card_bg"
                 android:paddingHorizontal="12dp" />
+
+
+
+            <!-- Opção de acessibilidade -->
+            <Switch
+                android:id="@+id/swAcessibilidade"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:background="@color/card_bg"
+                android:padding="16dp"
+                android:checked="false"
+                android:text="Rota acessível"
+                android:textColor="@color/text_dark"
+                android:textSize="16sp"
+                android:thumbTint="#009687" />
+
         </LinearLayout>
     </ScrollView>
 
@@ -142,7 +172,7 @@
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:layout_alignParentBottom="true"
-        android:backgroundTint="@color/primary_blue"
+        android:backgroundTint="#009687"
         android:text="Traçar rota  ➔"
         android:textAllCaps="false"
         android:textSize="16sp"

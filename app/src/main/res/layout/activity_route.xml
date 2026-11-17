@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/bg_main"
     android:padding="20dp">
 
-    <!-- Compact Header -->
+    <!-- CABEÇALHO -->
     <LinearLayout
         android:id="@+id/routeHeader"
         android:layout_width="0dp"
@@ -22,6 +23,7 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Voltar"
             android:src="@android:drawable/ic_menu_revert" />
 
         <LinearLayout
@@ -29,37 +31,41 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_weight="1"
-            android:orientation="vertical">
+            android:orientation="horizontal">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="CAMPUS GUIDE"
-                android:textColor="@color/text_muted"
-                android:textSize="10sp"
+                android:text="Uni"
+                android:textColor="#0F172A"
+                android:textSize="24sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Indoor Navigation"
-                android:textColor="@color/text_dark"
-                android:textSize="16sp"
+                android:text="Way"
+                android:textColor="#009687"
+                android:textSize="24sp"
                 android:textStyle="bold" />
+
         </LinearLayout>
 
         <TextView
+            android:id="@+id/tvAndarAtual"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@color/border_color"
             android:paddingHorizontal="8dp"
             android:paddingVertical="4dp"
-            android:text="Térreo"
+            android:text="Campus"
             android:textColor="@color/text_muted"
             android:textSize="11sp" />
+
     </LinearLayout>
 
-    <!-- Selection Summary Card -->
+
+    <!-- RESUMO DA ROTA -->
     <LinearLayout
         android:id="@+id/summaryCard"
         android:layout_width="0dp"
@@ -94,6 +100,7 @@
                 android:textColor="@color/text_dark"
                 android:textSize="13sp"
                 android:textStyle="bold" />
+
         </LinearLayout>
 
         <LinearLayout
@@ -118,10 +125,13 @@
                 android:textColor="@color/text_dark"
                 android:textSize="13sp"
                 android:textStyle="bold" />
+
         </LinearLayout>
+
     </LinearLayout>
 
-    <!-- Tab Selector -->
+
+    <!-- ABAS CAMPUS E BLOCO D -->
     <LinearLayout
         android:id="@+id/tabContainer"
         android:layout_width="0dp"
@@ -152,9 +162,11 @@
             android:text="Bloco D"
             android:textColor="@color/text_muted"
             android:textSize="14sp" />
+
     </LinearLayout>
 
-    <!-- Viewport Header Label -->
+
+    <!-- TÍTULO DO MAPA -->
     <TextView
         android:id="@+id/tvViewportLabel"
         android:layout_width="wrap_content"
@@ -167,12 +179,8 @@
         app:layout_constraintTop_toBottomOf="@id/tabContainer"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <!-- Canvas / Map View Area -->
 
-    <!-- Bottom Instructions Sheet -->
-
-
-    <!-- Área dos mapas -->
+    <!-- ÁREA DOS MAPAS -->
     <FrameLayout
         android:id="@+id/mapContainer"
         android:layout_width="0dp"
@@ -184,77 +192,135 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- Mapa externo do campus -->
+        <!-- CAMPUS -->
         <com.example.myapplication.view.CampusMapView
             android:id="@+id/campusMapView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:visibility="visible" />
 
-        <!-- Mapa interno do Bloco D -->
+        <!-- TÉRREO -->
         <com.example.myapplication.view.IndoorMapView
             android:id="@+id/indoorMapView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:visibility="gone" />
 
+        <!-- SEGUNDO ANDAR -->
+        <com.example.myapplication.view.Andar2MapView
+            android:id="@+id/andar2MapView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
+
+
+        <!-- SELETOR FLUTUANTE DE ANDARES -->
+        <LinearLayout
+            android:id="@+id/floorSelector"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|end"
+            android:layout_margin="10dp"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <ImageButton
+                android:id="@+id/btnLayers"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:backgroundTint="@color/card_bg"
+                android:contentDescription="Selecionar andar"
+                android:elevation="4dp"
+                android:padding="12dp"
+                android:src="@drawable/ic_layers" />
+
+            <LinearLayout
+                android:id="@+id/floorOptions"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <Button
+                    android:id="@+id/btnAndar2"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:backgroundTint="@color/card_bg"
+                    android:minWidth="0dp"
+                    android:padding="0dp"
+                    android:text="2"
+                    android:textColor="@color/text_dark"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/btnTerreo"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:backgroundTint="@color/primary_blue"
+                    android:minWidth="0dp"
+                    android:padding="0dp"
+                    android:text="T"
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
     </FrameLayout>
 
 
-    <!-- Painel inferior de instruções -->
+    <!-- PAINEL DE INSTRUÇÕES EXPANSÍVEL -->
     <LinearLayout
         android:id="@+id/bottomSheet"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:background="@color/icon_bg_dark"
         android:orientation="vertical"
-        android:padding="16dp"
+        android:padding="12dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- Título do painel -->
-        <TextView
+        <!-- BOTÃO PARA ABRIR E FECHAR -->
+        <Button
+            android:id="@+id/btnToggleInstructions"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="INSTRUÇÕES DE NAVEGAÇÃO"
-            android:textColor="@color/primary_blue"
-            android:textSize="10sp"
+            android:minHeight="48dp"
+            android:background="?attr/selectableItemBackground"
+            android:gravity="center"
+            android:text="INSTRUÇÕES DE NAVEGAÇÃO  ▲"
+            android:textAllCaps="false"
+            android:textColor="#009687"
+            android:textSize="13sp"
             android:textStyle="bold" />
 
-        <!-- Área rolável das instruções -->
+        <!-- INSTRUÇÕES COM ROLAGEM -->
         <ScrollView
+            android:id="@+id/scrollInstructions"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="160dp"
             android:layout_marginTop="8dp"
-            android:maxHeight="140dp"
             android:fillViewport="true"
-            android:scrollbars="vertical">
+            android:scrollbars="vertical"
+            android:visibility="gone">
 
             <TextView
                 android:id="@+id/tvInstructions"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Rota pronta para iniciar. As orientações aparecerão nesta área."
+                android:lineSpacingExtra="5dp"
+                android:text="Rota pronta para iniciar."
                 android:textColor="#FFFFFF"
-                android:textSize="13sp"
-                android:lineSpacingExtra="5dp" />
+                android:textSize="14sp" />
 
         </ScrollView>
 
-        <!-- Botão para voltar e selecionar outra rota -->
-        <Button
-            android:id="@+id/btnAlterarRota"
-            android:layout_width="match_parent"
-            android:layout_height="44dp"
-            android:layout_marginTop="12dp"
-            android:backgroundTint="@color/card_bg"
-            android:text="Alterar rota"
-            android:textColor="@color/text_dark"
-            android:textSize="14sp"
-            android:textStyle="bold" />
-
     </LinearLayout>
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>

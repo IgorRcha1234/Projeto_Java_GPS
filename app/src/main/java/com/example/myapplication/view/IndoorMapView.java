@@ -436,7 +436,14 @@ public class IndoorMapView extends View {
                     "LAB01_PORTA1",
                     "LAB01_PORTA2",
                     "LAB02_PORTA",
-                    "LAB03_PORTA"
+                    "LAB03_PORTA",
+
+                    // Novos pontos de navegação
+                    "C_SUBIDA",
+                    "C_PASSAGEM",
+                    "C_ACESSOS",
+                    "ESCADA_TERREO",
+                    "ELEVADOR_TERREO"
             };
 
 
