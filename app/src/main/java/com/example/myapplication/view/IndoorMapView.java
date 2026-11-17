@@ -1,4 +1,3 @@
-
 package com.example.myapplication.view;
 
 import android.content.Context;
@@ -18,6 +17,7 @@ import com.example.myapplication.model.Node;
 import com.example.myapplication.model.Edge;
 import com.example.myapplication.navigation.BuildingGraph;
 import com.example.myapplication.navigation.BlocoDGraphFactory;
+import com.example.myapplication.navigation.BlocoDAndar2GraphFactory;
 
 import java.util.List;
 
@@ -29,7 +29,7 @@ public class IndoorMapView extends View {
 
     private Bitmap mapa;
 
-    // Grafo do Bloco D
+    // Grafo atual (Térreo ou 2º Andar)
     private BuildingGraph grafo;
 
     // Rota calculada pelo Dijkstra
@@ -40,8 +40,8 @@ public class IndoorMapView extends View {
     private Paint pincelArestas;
     private Paint pincelRota;
 
-    // Mostra ou esconde nós e arestas
-    private static final boolean MOSTRAR_GRAFO_DEBUG = false;
+    // Mostra ou esconde nós e arestas (Debug)
+    private static final boolean MOSTRAR_GRAFO_DEBUG = true;
 
 
     // =====================================
@@ -90,7 +90,7 @@ public class IndoorMapView extends View {
 
     private void inicializar(Context context) {
 
-        // Carrega a imagem do Bloco D
+        // Carrega por padrão a imagem do Térreo do Bloco D
         mapa = BitmapFactory.decodeResource(
                 getResources(),
                 R.drawable.planta_bloco_d
@@ -98,37 +98,24 @@ public class IndoorMapView extends View {
 
         // Verifica as dimensões da imagem
         if (mapa != null) {
-
-            Log.d(
-                    "MAPA_DEBUG",
-                    "Largura: " + mapa.getWidth()
-                            + " | Altura: " + mapa.getHeight()
-            );
-
+            Log.d("MAPA_DEBUG", "Largura: " + mapa.getWidth() + " | Altura: " + mapa.getHeight());
         } else {
-
-            Log.e(
-                    "MAPA_DEBUG",
-                    "Erro ao carregar a planta do Bloco D"
-            );
+            Log.e("MAPA_DEBUG", "Erro ao carregar a planta do Bloco D");
         }
 
-        // Cria o grafo com os nós e conexões
+        // Cria o grafo padrão do térreo
         grafo = BlocoDGraphFactory.criarGrafo();
-
 
         // Pincel para os nós vermelhos
         pincelNos = new Paint(Paint.ANTI_ALIAS_FLAG);
         pincelNos.setColor(Color.RED);
         pincelNos.setStyle(Paint.Style.FILL);
 
-
         // Pincel para as arestas amarelas
         pincelArestas = new Paint(Paint.ANTI_ALIAS_FLAG);
         pincelArestas.setColor(Color.YELLOW);
         pincelArestas.setStrokeWidth(7f);
         pincelArestas.setStyle(Paint.Style.STROKE);
-
 
         // Pincel para a rota azul
         pincelRota = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -138,29 +125,20 @@ public class IndoorMapView extends View {
         pincelRota.setStrokeJoin(Paint.Join.ROUND);
         pincelRota.setStyle(Paint.Style.STROKE);
 
-
         // Configura o detector de zoom
         detectorZoom = new ScaleGestureDetector(
                 context,
                 new ScaleGestureDetector.SimpleOnScaleGestureListener() {
 
                     @Override
-                    public boolean onScale(
-                            ScaleGestureDetector detector) {
-
+                    public boolean onScale(ScaleGestureDetector detector) {
                         zoom *= detector.getScaleFactor();
 
                         // Limita o zoom entre 1x e 4x
-                        zoom = Math.max(
-                                ZOOM_MIN,
-                                Math.min(zoom, ZOOM_MAX)
-                        );
+                        zoom = Math.max(ZOOM_MIN, Math.min(zoom, ZOOM_MAX));
 
                         limitarDeslocamento();
-
-                        // Atualiza a tela
                         invalidate();
-
                         return true;
                     }
                 }
@@ -169,15 +147,34 @@ public class IndoorMapView extends View {
 
 
     // =====================================
+    // 5.1. MÉTODO PARA ALTERNAR ANDAR E MAPA
+    // =====================================
+
+    public void mudarAndar(int andar) {
+        if (andar == 2) {
+            mapa = BitmapFactory.decodeResource(getResources(), R.drawable.planta_andar2);
+            grafo = BlocoDAndar2GraphFactory.criarGrafo();
+        } else {
+            mapa = BitmapFactory.decodeResource(getResources(), R.drawable.planta_bloco_d);
+            grafo = BlocoDGraphFactory.criarGrafo();
+        }
+
+        // Reseta o zoom e o deslocamento ao trocar de andar
+        zoom = 1.0f;
+        deslocamentoX = 0f;
+        deslocamentoY = 0f;
+        rotaAtual = null;
+
+        invalidate();
+    }
+
+
+    // =====================================
     // 6. RECEBER A ROTA CALCULADA
     // =====================================
 
     public void definirRota(List<Node> rota) {
-
-        // Guarda os nós da rota
         rotaAtual = rota;
-
-        // Solicita um novo desenho
         invalidate();
     }
 
@@ -188,51 +185,31 @@ public class IndoorMapView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-
-        // Envia os toques para o detector de zoom
         detectorZoom.onTouchEvent(event);
 
         switch (event.getActionMasked()) {
-
             case MotionEvent.ACTION_DOWN:
-
                 ultimoX = event.getX();
                 ultimoY = event.getY();
-
                 arrastando = true;
-
                 return true;
-
 
             case MotionEvent.ACTION_POINTER_DOWN:
-
-                // Dois dedos: prioriza o zoom
                 arrastando = false;
-
                 return true;
-
 
             case MotionEvent.ACTION_POINTER_UP:
-
                 arrastando = false;
-
                 return true;
 
-
             case MotionEvent.ACTION_MOVE:
-
-                if (event.getPointerCount() == 1
-                        && arrastando
-                        && !detectorZoom.isInProgress()) {
-
+                if (event.getPointerCount() == 1 && arrastando && !detectorZoom.isInProgress()) {
                     float x = event.getX();
                     float y = event.getY();
 
-                    // Calcula quanto o dedo se moveu
                     float deltaX = x - ultimoX;
                     float deltaY = y - ultimoY;
 
-                    // Atualiza a posição do mapa
                     deslocamentoX += deltaX;
                     deslocamentoY += deltaY;
 
@@ -243,22 +220,15 @@ public class IndoorMapView extends View {
 
                     invalidate();
                 }
-
                 return true;
-
 
             case MotionEvent.ACTION_UP:
-
                 arrastando = false;
                 performClick();
-
                 return true;
 
-
             case MotionEvent.ACTION_CANCEL:
-
                 arrastando = false;
-
                 return true;
         }
 
@@ -278,49 +248,23 @@ public class IndoorMapView extends View {
     // =====================================
 
     private void limitarDeslocamento() {
-
-        if (mapa == null
-                || getWidth() == 0
-                || getHeight() == 0) {
-
+        if (mapa == null || getWidth() == 0 || getHeight() == 0) {
             return;
         }
 
-        // Escala para a imagem caber na View
         float escalaBase = Math.min(
                 (float) getWidth() / mapa.getWidth(),
                 (float) getHeight() / mapa.getHeight()
         );
 
-        // Dimensões após o zoom
-        float larguraFinal =
-                mapa.getWidth() * escalaBase * zoom;
+        float larguraFinal = mapa.getWidth() * escalaBase * zoom;
+        float alturaFinal = mapa.getHeight() * escalaBase * zoom;
 
-        float alturaFinal =
-                mapa.getHeight() * escalaBase * zoom;
+        float limiteX = Math.max(0f, (larguraFinal - getWidth()) / 2f);
+        float limiteY = Math.max(0f, (alturaFinal - getHeight()) / 2f);
 
-        // Limite horizontal
-        float limiteX = Math.max(
-                0f,
-                (larguraFinal - getWidth()) / 2f
-        );
-
-        // Limite vertical
-        float limiteY = Math.max(
-                0f,
-                (alturaFinal - getHeight()) / 2f
-        );
-
-        // Mantém o mapa dentro dos limites
-        deslocamentoX = Math.max(
-                -limiteX,
-                Math.min(deslocamentoX, limiteX)
-        );
-
-        deslocamentoY = Math.max(
-                -limiteY,
-                Math.min(deslocamentoY, limiteY)
-        );
+        deslocamentoX = Math.max(-limiteX, Math.min(deslocamentoX, limiteX));
+        deslocamentoY = Math.max(-limiteY, Math.min(deslocamentoY, limiteY));
     }
 
 
@@ -332,81 +276,37 @@ public class IndoorMapView extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        if (mapa == null
-                || getWidth() == 0
-                || getHeight() == 0) {
+        if (mapa == null || getWidth() == 0 || getHeight() == 0) {
             return;
         }
 
-        // Dimensões da área disponível
         float larguraTela = getWidth();
         float alturaTela = getHeight();
 
-        // Dimensões da imagem original
         float larguraMapa = mapa.getWidth();
         float alturaMapa = mapa.getHeight();
 
-        // Calcula a escala inicial
         float escalaBase = Math.min(
                 larguraTela / larguraMapa,
                 alturaTela / alturaMapa
         );
 
-        // Calcula a centralização
-        float x = (
-                larguraTela - larguraMapa * escalaBase
-        ) / 2f;
-
-        float y = (
-                alturaTela - alturaMapa * escalaBase
-        ) / 2f;
+        float x = (larguraTela - larguraMapa * escalaBase) / 2f;
+        float y = (alturaTela - alturaMapa * escalaBase) / 2f;
 
         canvas.save();
 
-        // Aplica a movimentação
-        canvas.translate(
-                deslocamentoX,
-                deslocamentoY
-        );
-
-        // Centraliza o desenho
+        canvas.translate(deslocamentoX, deslocamentoY);
         canvas.translate(x, y);
+        canvas.scale(escalaBase, escalaBase);
+        canvas.scale(zoom, zoom, larguraMapa / 2f, alturaMapa / 2f);
 
-        // Aplica a escala inicial
-        canvas.scale(
-                escalaBase,
-                escalaBase
-        );
+        // Desenha a planta (Térreo ou 2º Andar)
+        canvas.drawBitmap(mapa, 0, 0, null);
 
-        // Aplica o zoom adicional
-        canvas.scale(
-                zoom,
-                zoom,
-                larguraMapa / 2f,
-                alturaMapa / 2f
-        );
-
-
-        // ---------------------------------
-        // DESENHA A PLANTA
-        // ---------------------------------
-
-        canvas.drawBitmap(
-                mapa,
-                0,
-                0,
-                null
-        );
-
-
-        // ---------------------------------
-        // DESENHA A ROTA AZUL
-        // ---------------------------------
-
+        // Desenha a rota azul
         if (rotaAtual != null && rotaAtual.size() >= 2) {
-
             for (int i = 0; i < rotaAtual.size() - 1; i++) {
-
                 Node atual = rotaAtual.get(i);
                 Node proximo = rotaAtual.get(i + 1);
 
@@ -420,46 +320,14 @@ public class IndoorMapView extends View {
             }
         }
 
-
-        // ---------------------------------
-        // DESENHOS DE TESTE DO GRAFO
-        // ---------------------------------
-
+        // Desenhos de teste do grafo (Debug)
         if (MOSTRAR_GRAFO_DEBUG) {
-
-            String[] ids = {
-                    "ENTRADA",
-                    "C_INFERIOR",
-                    "C_CENTRAL",
-                    "C_SUPERIOR",
-                    "C_ESQUERDA",
-                    "LAB01_PORTA1",
-                    "LAB01_PORTA2",
-                    "LAB02_PORTA",
-                    "LAB03_PORTA"
-            };
-
-
-            // Desenha as conexões amarelas
-            for (String id : ids) {
-
-                Node origem = grafo.buscarNo(id);
-
-                if (origem == null) {
-                    continue;
-                }
-
-                for (Edge aresta : grafo.obterVizinhos(id)) {
-
+            for (Node origem : grafo.obterTodosNos()) {
+                for (Edge aresta : grafo.obterVizinhos(origem.getId())) {
                     Node destino = aresta.getDestino();
-
-                    // Evita desenhar duas vezes
-                    if (origem.getId().compareTo(
-                            destino.getId()) >= 0) {
-
+                    if (origem.getId().compareTo(destino.getId()) >= 0) {
                         continue;
                     }
-
                     canvas.drawLine(
                             origem.getX(),
                             origem.getY(),
@@ -470,51 +338,31 @@ public class IndoorMapView extends View {
                 }
             }
 
-
-            // Desenha os nós vermelhos
-            for (String id : ids) {
-
-                Node no = grafo.buscarNo(id);
-
-                if (no != null) {
-
-                    canvas.drawCircle(
-                            no.getX(),
-                            no.getY(),
-                            10f,
-                            pincelNos
-                    );
-                }
+            for (Node no : grafo.obterTodosNos()) {
+                canvas.drawCircle(no.getX(), no.getY(), 10f, pincelNos);
             }
         }
-        // Marcadores da rota interna
+
         desenharMarcadores(canvas);
-        // Restaura o Canvas
         canvas.restore();
     }
 
     private void desenharMarcadores(Canvas canvas) {
-
-        // Verifica se existe uma rota
         if (rotaAtual == null || rotaAtual.isEmpty()) {
             return;
         }
 
-        // Primeiro e último nós da rota
         Node inicio = rotaAtual.get(0);
         Node destino = rotaAtual.get(rotaAtual.size() - 1);
 
-        // Contorno branco dos marcadores
         Paint contorno = new Paint(Paint.ANTI_ALIAS_FLAG);
         contorno.setColor(Color.WHITE);
         contorno.setStyle(Paint.Style.FILL);
 
-        // Marcador verde
         Paint pincelInicio = new Paint(Paint.ANTI_ALIAS_FLAG);
         pincelInicio.setColor(Color.rgb(22, 163, 74));
         pincelInicio.setStyle(Paint.Style.FILL);
 
-        // Marcador vermelho
         Paint pincelDestino = new Paint(Paint.ANTI_ALIAS_FLAG);
         pincelDestino.setColor(Color.rgb(220, 38, 38));
         pincelDestino.setStyle(Paint.Style.FILL);
@@ -522,35 +370,10 @@ public class IndoorMapView extends View {
         float raio = 12f;
         float raioContorno = 15f;
 
-        // INÍCIO: contorno branco e círculo verde
-        canvas.drawCircle(
-                inicio.getX(),
-                inicio.getY(),
-                raioContorno,
-                contorno
-        );
+        canvas.drawCircle(inicio.getX(), inicio.getY(), raioContorno, contorno);
+        canvas.drawCircle(inicio.getX(), inicio.getY(), raio, pincelInicio);
 
-        canvas.drawCircle(
-                inicio.getX(),
-                inicio.getY(),
-                raio,
-                pincelInicio
-        );
-
-        // DESTINO: contorno branco e círculo vermelho
-        canvas.drawCircle(
-                destino.getX(),
-                destino.getY(),
-                raioContorno,
-                contorno
-        );
-
-        canvas.drawCircle(
-                destino.getX(),
-                destino.getY(),
-                raio,
-                pincelDestino
-        );
+        canvas.drawCircle(destino.getX(), destino.getY(), raioContorno, contorno);
+        canvas.drawCircle(destino.getX(), destino.getY(), raio, pincelDestino);
     }
-
 }

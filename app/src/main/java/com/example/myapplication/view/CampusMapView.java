@@ -1,4 +1,3 @@
-
 package com.example.myapplication.view;
 
 import android.content.Context;
@@ -543,5 +542,4 @@ public class CampusMapView extends View {
                 pincelDestino
         );
     }
-
 }
